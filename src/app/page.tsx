@@ -1,3 +1,4 @@
+import InteractiveBackground from "./interactive-background";
 import QuestionsList from "./questions-list";
 import { getQuestionsPage } from "@/lib/questions";
 
@@ -11,18 +12,23 @@ export default async function Page() {
   const { questions, hasMore } = await getQuestionsPage(0, PAGE_SIZE);
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 py-10 sm:py-14">
-      <header className="mb-7">
-        <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-xs font-medium text-brand">
-          <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-          Live now
-        </span>
-        <h1 className="text-3xl font-semibold tracking-tight">Live Q&amp;A</h1>
-        <p className="mt-1.5 text-sm text-muted">
-          Ask a question, upvote the ones you want answered.
-        </p>
-      </header>
-      <QuestionsList initialQuestions={questions} initialHasMore={hasMore} />
-    </main>
+    <>
+      <InteractiveBackground />
+      <main className="relative z-10 mx-auto w-full max-w-2xl px-5 py-10 sm:py-14">
+        <header className="mb-7">
+          <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 text-xs font-medium text-indigo-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 pulse-dot" />
+            Live now
+          </span>
+          <h1 className="text-3xl font-semibold tracking-tight gradient-text">
+            Live Q&amp;A
+          </h1>
+          <p className="mt-1.5 text-sm text-white/40">
+            Ask a question, upvote the ones you want answered, and vote on solutions.
+          </p>
+        </header>
+        <QuestionsList initialQuestions={questions} initialHasMore={hasMore} />
+      </main>
+    </>
   );
 }

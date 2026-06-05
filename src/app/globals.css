@@ -1,29 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #090d16;
+  --foreground: #f8fafc;
   
-  --brand: #4f46e5;
-  --brand-soft: #eeebff;
-  --brand-strong: #3730a3;
-  --surface: #ffffff;
-  --muted: #64748b;
-  --border: #e2e8f0;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #090d16;
-    --foreground: #f8fafc;
-    
-    --brand: #6366f1;
-    --brand-soft: #1b1b3a;
-    --brand-strong: #818cf8;
-    --surface: #131a26;
-    --muted: #94a3b8;
-    --border: #1e293b;
-  }
+  --brand: #6366f1;
+  --brand-soft: #1b1b3a;
+  --brand-strong: #818cf8;
+  --surface: rgba(255, 255, 255, 0.04);
+  --muted: #94a3b8;
+  --border: rgba(255, 255, 255, 0.06);
 }
 
 @theme {
@@ -40,11 +26,55 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
 
+/* Slide-down animation for poll sections */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: slideDown 0.25s ease-out;
+}
+
+/* Smooth gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #818cf8, #a78bfa, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effects */
+.glow-indigo {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15),
+              0 0 60px rgba(99, 102, 241, 0.05);
+}
+
+/* Pulse dot */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
