@@ -6,6 +6,7 @@ type Solution = {
   id: string;
   body: string;
   author: string | null;
+  is_accepted: boolean;
   votes: number;
 };
 
@@ -13,62 +14,105 @@ type Question = {
   id: string;
   body: string;
   author: string | null;
+  tags: string[];
   votes: number;
 };
+
+const AVAILABLE_TAGS = ["Next.js", "React", "Database", "Postgres", "Vercel", "Search", "Frontend", "General"];
 
 function PollBar({
   solution,
   totalVotes,
   onVote,
+  onAccept,
   rank,
 }: {
   solution: Solution;
   totalVotes: number;
   onVote: () => void;
+  onAccept: (e: React.MouseEvent) => void;
   rank: number;
 }) {
   const pct = totalVotes > 0 ? (solution.votes / totalVotes) * 100 : 0;
   const isLeading = rank === 0 && totalVotes > 0;
 
   return (
-    <button
-      onClick={onVote}
-      className="group relative w-full rounded-xl border border-white/[0.06] bg-white/[0.03] p-3 text-left transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.06]"
-    >
-      {/* Animated fill bar */}
-      <div
-        className="absolute inset-0 rounded-xl transition-all duration-700 ease-out"
-        style={{
-          width: `${pct}%`,
-          background: isLeading
-            ? "linear-gradient(90deg, rgba(99,102,241,0.15), rgba(168,85,247,0.15))"
-            : "linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.06))",
-        }}
-      />
-      <div className="relative flex items-center justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-white/90 leading-snug">{solution.body}</p>
-          {solution.author && (
-            <p className="mt-1 text-[11px] text-white/40">— {solution.author}</p>
-          )}
+    <div className="group relative w-full flex items-stretch gap-1">
+      <button
+        onClick={onVote}
+        className={`flex-1 relative rounded-xl border p-3 text-left transition-all duration-300 ${
+          solution.is_accepted
+            ? "border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/40 hover:bg-emerald-500/10"
+            : "border-white/[0.06] bg-white/[0.03] hover:border-white/[0.12] hover:bg-white/[0.06]"
+        }`}
+      >
+        {/* Animated fill bar */}
+        <div
+          className="absolute inset-0 rounded-xl transition-all duration-700 ease-out"
+          style={{
+            width: `${pct}%`,
+            background: solution.is_accepted
+              ? "linear-gradient(90deg, rgba(16,185,129,0.15), rgba(52,211,153,0.1))"
+              : isLeading
+              ? "linear-gradient(90deg, rgba(99,102,241,0.15), rgba(168,85,247,0.15))"
+              : "linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.06))",
+          }}
+        />
+        <div className="relative flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              {solution.is_accepted && (
+                <span className="inline-flex items-center rounded bg-emerald-500/20 px-1 text-[9px] font-bold uppercase tracking-wider text-emerald-400">
+                  ✓ Verified Solution
+                </span>
+              )}
+              <p className="text-sm text-white/90 leading-snug">{solution.body}</p>
+            </div>
+            {solution.author && (
+              <p className="mt-1 text-[11px] text-white/40">— {solution.author}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs font-mono text-white/50 tabular-nums">
+              {pct.toFixed(0)}%
+            </span>
+            <span
+              className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold tabular-nums transition-colors ${
+                solution.is_accepted
+                  ? "bg-emerald-500/20 text-emerald-300"
+                  : isLeading
+                  ? "bg-indigo-500/20 text-indigo-300"
+                  : "bg-white/[0.06] text-white/60"
+              }`}
+            >
+              <span className="text-[10px] opacity-60">▲</span>
+              {solution.votes}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-mono text-white/50 tabular-nums">
-            {pct.toFixed(0)}%
-          </span>
-          <span
-            className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold tabular-nums transition-colors ${
-              isLeading
-                ? "bg-indigo-500/20 text-indigo-300"
-                : "bg-white/[0.06] text-white/60"
-            }`}
-          >
-            <span className="text-[10px] opacity-60">▲</span>
-            {solution.votes}
-          </span>
-        </div>
-      </div>
-    </button>
+      </button>
+
+      {/* Verify Action Button */}
+      <button
+        onClick={onAccept}
+        title={solution.is_accepted ? "Revoke acceptance" : "Accept/Verify solution"}
+        className={`px-3 rounded-xl border flex items-center justify-center transition-all ${
+          solution.is_accepted
+            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+            : "border-white/[0.06] bg-white/[0.03] text-white/30 hover:text-white/60 hover:bg-white/[0.06] hover:border-white/[0.12]"
+        }`}
+      >
+        <svg
+          className="h-4.5 w-4.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </button>
+    </div>
   );
 }
 
@@ -103,7 +147,6 @@ function QuestionCard({
   }
 
   async function voteSolution(solutionId: string) {
-    // Optimistic update
     setSolutions((sols) =>
       sols.map((s) => (s.id === solutionId ? { ...s, votes: s.votes + 1 } : s))
     );
@@ -126,6 +169,37 @@ function QuestionCard({
     }
   }
 
+  async function toggleAcceptSolution(solutionId: string, currentStatus: boolean) {
+    const nextStatus = !currentStatus;
+    
+    // Optimistically update local state
+    setSolutions((sols) =>
+      sols.map((s) => {
+        if (s.id === solutionId) {
+          return { ...s, is_accepted: nextStatus };
+        }
+        // Unset all other solutions as accepted if we are enabling this one
+        return nextStatus ? { ...s, is_accepted: false } : s;
+      })
+    );
+
+    const res = await fetch(
+      `/api/questions/${q.id}/solutions/${solutionId}/accept`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isAccepted: nextStatus }),
+      }
+    );
+
+    if (!res.ok) {
+      // Revert if error
+      setSolutions((sols) =>
+        sols.map((s) => (s.id === solutionId ? { ...s, is_accepted: currentStatus } : s))
+      );
+    }
+  }
+
   async function addSolution() {
     if (!newSolution.trim()) return;
     setAdding(true);
@@ -138,14 +212,19 @@ function QuestionCard({
 
     if (res.ok) {
       const created = await res.json();
-      setSolutions((sols) => [...sols, { ...created, votes: 0 }]);
+      setSolutions((sols) => [...sols, { ...created, votes: 0, is_accepted: false }]);
       setNewSolution("");
     }
     setAdding(false);
   }
 
   const totalVotes = solutions.reduce((sum, s) => sum + s.votes, 0);
-  const sorted = [...solutions].sort((a, b) => b.votes - a.votes);
+  const sorted = [...solutions].sort((a, b) => {
+    // Verified solution always pins at the very top
+    if (a.is_accepted && !b.is_accepted) return -1;
+    if (!a.is_accepted && b.is_accepted) return 1;
+    return b.votes - a.votes;
+  });
 
   return (
     <li className="group rounded-2xl border border-white/[0.06] bg-white/[0.04] backdrop-blur-xl shadow-lg shadow-black/10 transition-all duration-300 hover:border-white/[0.1] hover:shadow-xl hover:shadow-black/20">
@@ -164,13 +243,21 @@ function QuestionCard({
         {/* Question content */}
         <div className="min-w-0 flex-1 pt-0.5">
           <p className="leading-snug text-white/90">{q.body}</p>
-          <div className="mt-2 flex items-center gap-3">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             {q.author && (
-              <span className="text-xs text-white/40">{q.author}</span>
+              <span className="text-xs text-white/40 mr-1">{q.author}</span>
             )}
+            
+            {/* Display tags */}
+            {q.tags && q.tags.map((tag) => (
+              <span key={tag} className="inline-flex rounded-full bg-white/[0.05] border border-white/[0.08] px-2.5 py-0.5 text-[10px] font-medium text-white/60">
+                {tag}
+              </span>
+            ))}
+
             <button
               onClick={loadSolutions}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-400/80 transition-colors hover:text-indigo-300"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-400/80 transition-colors hover:text-indigo-300 ml-auto"
             >
               <svg
                 className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
@@ -214,6 +301,10 @@ function QuestionCard({
                     solution={s}
                     totalVotes={totalVotes}
                     onVote={() => voteSolution(s.id)}
+                    onAccept={(e) => {
+                      e.stopPropagation();
+                      toggleAcceptSolution(s.id, s.is_accepted);
+                    }}
                     rank={i}
                   />
                 ))}
@@ -260,39 +351,49 @@ export default function QuestionsList({
   const [questions, setQuestions] = useState(initialQuestions);
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  
+  // Selected tags for the NEW question being drafted
+  const [draftTags, setDraftTags] = useState<string[]>([]);
+  
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
-
   const [hydrated, setHydrated] = useState(false);
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHydrated(true);
   }, []);
 
-  // Debounced search
+  // Filter & Search handler
   useEffect(() => {
     const id = setTimeout(async () => {
-      const url = query
-        ? `/api/questions?q=${encodeURIComponent(query)}`
-        : `/api/questions`;
+      let url = "/api/questions";
+      
+      if (selectedTag) {
+        url = `/api/questions?t=${encodeURIComponent(selectedTag)}`;
+      } else if (query) {
+        url = `/api/questions?q=${encodeURIComponent(query)}`;
+      }
+      
       const res = await fetch(url);
       const data = await res.json();
-      setQuestions(data.questions);
-      setHasMore(data.hasMore);
+      setQuestions(data.questions || []);
+      setHasMore(data.hasMore || false);
     }, 300);
     return () => clearTimeout(id);
-  }, [query]);
+  }, [query, selectedTag]);
 
   async function submit() {
     if (!draft.trim()) return;
     const res = await fetch("/api/questions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: draft }),
+      body: JSON.stringify({ body: draft, tags: draftTags }),
     });
     const created = await res.json();
-    setQuestions((qs) => [{ ...created, votes: 0 }, ...qs]);
+    setQuestions((qs) => [{ ...created, votes: 0, tags: draftTags }, ...qs]);
     setDraft("");
+    setDraftTags([]);
   }
 
   async function upvote(id: string) {
@@ -320,6 +421,14 @@ export default function QuestionsList({
     setLoading(false);
   }
 
+  const toggleDraftTag = (tag: string) => {
+    if (draftTags.includes(tag)) {
+      setDraftTags(draftTags.filter((t) => t !== tag));
+    } else {
+      setDraftTags([...draftTags, tag]);
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Ask box */}
@@ -341,20 +450,80 @@ export default function QuestionsList({
             Ask
           </button>
         </div>
+
+        {/* Tag selection interface when drafting a question */}
+        {draft.trim().length > 0 && (
+          <div className="mt-3.5 space-y-1.5 border-t border-white/[0.06] pt-3 animate-in">
+            <p className="text-[10px] font-medium text-white/30 uppercase tracking-wider">
+              Categorize your question:
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {AVAILABLE_TAGS.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => toggleDraftTag(tag)}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
+                    draftTags.includes(tag)
+                      ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20 border-indigo-400"
+                      : "bg-white/[0.04] border border-white/[0.08] text-white/60 hover:text-white/90 hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Search + hydration */}
+      {/* Search Bar */}
       <div className="flex items-center gap-3">
         <input
           id="search-input"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelectedTag(null); // Clear active tag filter when searching
+          }}
           placeholder="Search questions…"
           className="w-full flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-xl px-4 py-2.5 text-sm text-white/90 outline-none placeholder:text-white/40 focus:border-indigo-500/40 transition-colors"
         />
         <span className="shrink-0 text-xs text-white/30">
           {hydrated ? "Interactive ✓" : "Loading…"}
         </span>
+      </div>
+
+      {/* Category Tag Filters */}
+      <div className="flex flex-wrap gap-1.5 py-1">
+        <button
+          onClick={() => {
+            setSelectedTag(null);
+            setQuery("");
+          }}
+          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+            !selectedTag
+              ? "bg-white/10 text-white border border-white/20"
+              : "bg-white/[0.02] border border-white/[0.06] text-white/50 hover:text-white/80"
+          }`}
+        >
+          All Topics
+        </button>
+        {AVAILABLE_TAGS.map((tag) => (
+          <button
+            key={tag}
+            onClick={() => {
+              setSelectedTag(tag);
+              setQuery("");
+            }}
+            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+              selectedTag === tag
+                ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                : "bg-white/[0.02] border border-white/[0.06] text-white/50 hover:text-white/80"
+            }`}
+          >
+            {tag}
+          </button>
+        ))}
       </div>
 
       {/* Questions list */}
@@ -366,11 +535,11 @@ export default function QuestionsList({
 
       {questions.length === 0 && (
         <p className="rounded-2xl border border-dashed border-white/[0.1] p-8 text-center text-sm text-white/40">
-          No questions yet — be the first to ask.
+          No questions yet in this category.
         </p>
       )}
 
-      {hasMore && (
+      {hasMore && !selectedTag && (
         <div className="flex justify-center">
           <button
             id="load-more-button"

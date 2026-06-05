@@ -10,7 +10,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from("solutions")
-    .select("id, body, author, created_at, solution_votes(count)")
+    .select("id, body, author, created_at, is_accepted, solution_votes(count)")
     .eq("question_id", questionId)
     .order("created_at", { ascending: true });
 
@@ -20,6 +20,7 @@ export async function GET(
     id: s.id,
     body: s.body,
     author: s.author,
+    is_accepted: s.is_accepted || false,
     votes: s.solution_votes?.[0]?.count ?? 0,
   }));
 

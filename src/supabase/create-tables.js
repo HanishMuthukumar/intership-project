@@ -2,7 +2,7 @@
 // Usage: Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars, then run:
 //   node src/supabase/create-tables.js
 //
-// Or just copy the SQL from src/supabase/polling-schema.sql 
+// Or just copy the SQL from src/supabase/tags-verification-schema.sql
 // and run it in the Supabase SQL Editor.
 
 const { createClient } = require("@supabase/supabase-js");
@@ -12,7 +12,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.log("Missing env vars. Run the SQL manually in the Supabase SQL Editor:");
-  console.log("File: src/supabase/polling-schema.sql");
+  console.log("File: src/supabase/tags-verification-schema.sql");
   process.exit(1);
 }
 
@@ -23,7 +23,7 @@ async function run() {
   if (!error) {
     console.log("Tables already exist!");
   } else {
-    console.log("Tables not found. Please run src/supabase/polling-schema.sql in the Supabase SQL Editor.");
+    console.log("Tables not found. Please run src/supabase/tags-verification-schema.sql in the Supabase SQL Editor.");
   }
 }
 
