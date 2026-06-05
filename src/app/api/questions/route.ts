@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { getQuestionsPage, searchQuestions } from "@/lib/questions";
+import { generateAIResponse } from "@/lib/ai";
 
 const PAGE_SIZE = 10;
 
@@ -41,12 +42,29 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const { body, author, tags } = await req.json();
 
-  const { data, error } = await supabase
+  // 1. Insert original question
+  const { data: questionData, error: questionError } = await supabase
     .from("questions")
     .insert({ body, author, tags: tags || [] })
     .select()
     .single();
 
-  if (error) return Response.json({ error: error.message }, { status: 500 });
-  return Response.json(data);
+  if (questionError) return Response.json({ error: questionError.message }, { status: 500 });
+
+  // 2. Generate and Insert AI answer asynchronously/instantly
+  try {
+    const aiAnswer = generateAIResponse(body, tags || []);
+    await supabase
+      .from("solutions")
+      .insert({
+        question_id: questionData.id,
+        body: aiAnswer,
+        author: "AI Assistant (Automated)",
+        is_accepted: false
+      });
+  } catch (err) {
+    console.error("Failed to generate AI auto-response:", err);
+  }
+
+  return Response.json(questionData);
 }
