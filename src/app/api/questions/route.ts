@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { getQuestionsPage, searchQuestions } from "@/lib/questions";
-import { generateAIResponse } from "@/lib/ai";
+import { getAIEmbedding, getAIAnswer } from "@/lib/ai";
 
 const PAGE_SIZE = 10;
 
@@ -29,7 +29,36 @@ export async function GET(req: Request) {
     return Response.json({ questions, hasMore: false });
   }
 
+  // If search query is provided (Smart AI Search)
   if (q) {
+    try {
+      const embedding = await getAIEmbedding(q);
+      if (embedding) {
+        // Run AI Semantic Smart Search via pgvector match function
+        const { data, error } = await supabase.rpc("match_questions", {
+          query_embedding: embedding,
+          match_threshold: 0.1, // Show all matches with similarity > 10%
+          match_count: PAGE_SIZE
+        });
+
+        if (!error && data) {
+          const questions = data.map((row: any) => ({
+            id: row.id,
+            body: row.body,
+            author: row.author,
+            tags: row.tags || [],
+            votes: row.votes ?? 0
+          }));
+          return Response.json({ questions, hasMore: false });
+        } else if (error) {
+          console.error("Supabase RPC match_questions failed:", error.message);
+        }
+      }
+    } catch (err: any) {
+      console.error("AI Semantic Search failed, falling back to keyword search:", err.message);
+    }
+
+    // Keyword text search fallback
     const questions = await searchQuestions(q, PAGE_SIZE);
     return Response.json({ questions, hasMore: false });
   }
@@ -42,18 +71,31 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const { body, author, tags } = await req.json();
 
-  // 1. Insert original question
+  // 1. Generate embedding vector if key is configured
+  let embedding = null;
+  try {
+    embedding = await getAIEmbedding(body);
+  } catch (err: any) {
+    console.error("Failed to generate embedding for new question:", err.message);
+  }
+
+  // 2. Insert original question (with embedding if generated)
   const { data: questionData, error: questionError } = await supabase
     .from("questions")
-    .insert({ body, author, tags: tags || [] })
+    .insert({
+      body,
+      author,
+      tags: tags || [],
+      ...(embedding ? { embedding } : {})
+    })
     .select()
     .single();
 
   if (questionError) return Response.json({ error: questionError.message }, { status: 500 });
 
-  // 2. Generate and Insert AI answer asynchronously/instantly
+  // 3. Generate and Insert AI answer
   try {
-    const aiAnswer = generateAIResponse(body, tags || []);
+    const aiAnswer = await getAIAnswer(body, tags || []);
     await supabase
       .from("solutions")
       .insert({

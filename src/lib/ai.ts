@@ -1,4 +1,18 @@
-// Local AI Helper Engine for Semantic Detection and AI Answers
+import { GoogleGenAI } from "@google/genai";
+
+// Initialize GoogleGenAI SDK client if API key is present
+const hasApiKey = !!process.env.GEMINI_API_KEY;
+let ai: GoogleGenAI | null = null;
+if (hasApiKey) {
+  try {
+    ai = new GoogleGenAI({});
+    console.log("GoogleGenAI initialized successfully using GEMINI_API_KEY.");
+  } catch (e: any) {
+    console.error("Failed to initialize GoogleGenAI:", e.message);
+  }
+} else {
+  console.warn("GEMINI_API_KEY not found. GoogleGenAI features will run in local fallback mode.");
+}
 
 const TOPIC_ANSWERS: Record<string, string[]> = {
   "Next.js": [
@@ -59,7 +73,7 @@ export function getSimilarity(s1: string, s2: string): number {
   return (longerLength - costs[shorter.length]) / longerLength;
 }
 
-// Generate an intelligent answer based on categories/keywords
+// Generate an intelligent answer based on categories/keywords (local fallback)
 export function generateAIResponse(questionBody: string, tags: string[]): string {
   const selectedTags = tags.length > 0 ? tags : ["General"];
   
@@ -78,4 +92,54 @@ export function generateAIResponse(questionBody: string, tags: string[]): string
   // Select a random matching advice
   const index = Math.floor(Math.random() * potentialAnswers.length);
   return potentialAnswers[index];
+}
+
+// Generate embedding vector using Gemini (768 dimensions)
+export async function getAIEmbedding(text: string): Promise<number[] | null> {
+  if (!ai) return null;
+
+  try {
+    const response = await ai.models.embedContent({
+      model: "gemini-embedding-001",
+      contents: text,
+      config: {
+        outputDimensionality: 768,
+      },
+    });
+    
+    const embedding = response.embeddings?.[0]?.values;
+    if (embedding && embedding.length === 768) {
+      return embedding;
+    }
+    return null;
+  } catch (err: any) {
+    console.error("Gemini embedding API call failed:", err.message);
+    return null;
+  }
+}
+
+// Generate real-time answer using Gemini 2.5 Flash
+export async function getAIAnswer(questionBody: string, tags: string[]): Promise<string> {
+  if (!ai) {
+    return generateAIResponse(questionBody, tags);
+  }
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `You are an AI Teaching Assistant for an engineering/web development course.
+Question: "${questionBody}"
+Tags: ${tags.join(", ") || "General"}
+
+Provide a concise, helpful, and technically accurate answer (1-3 sentences) suitable for a student Q&A board. Keep it brief.`,
+    });
+    
+    if (response.text) {
+      return response.text.trim();
+    }
+  } catch (err: any) {
+    console.error("Gemini text generation failed, falling back to local advice:", err.message);
+  }
+
+  return generateAIResponse(questionBody, tags);
 }

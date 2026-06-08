@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { getSimilarity } from "@/lib/ai";
+import { getSimilarity, getAIEmbedding } from "@/lib/ai";
 
 // GET /api/questions/similar?q=... — Check for semantically similar questions
 export async function GET(req: Request) {
@@ -10,31 +10,62 @@ export async function GET(req: Request) {
     return Response.json({ similar: [] });
   }
 
-  // Load last 50 questions to find similarity matching
-  const { data, error } = await supabase
-    .from("questions")
-    .select("id, body, author, tags")
-    .order("created_at", { ascending: false })
-    .limit(50);
+  // 1. Try Gemini semantic embedding matching first
+  try {
+    const embedding = await getAIEmbedding(q);
+    if (embedding) {
+      const { data, error } = await supabase.rpc("match_questions", {
+        query_embedding: embedding,
+        match_threshold: 0.60, // 60% similarity threshold for duplicate warnings
+        match_count: 3
+      });
 
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+      if (!error && data && data.length > 0) {
+        const similar = data.map((row: any) => ({
+          id: row.id,
+          body: row.body,
+          author: row.author,
+          tags: row.tags || [],
+          score: row.similarity
+        }));
+        return Response.json({ similar });
+      } else if (error) {
+        console.error("Supabase RPC match_questions failed in similarity route:", error.message);
+      }
+    }
+  } catch (err: any) {
+    console.error("AI Similarity check failed, falling back to Levenshtein:", err.message);
   }
 
-  const similar = (data ?? [])
-    .map(row => {
-      const score = getSimilarity(q, row.body);
-      return {
-        id: row.id,
-        body: row.body,
-        author: row.author,
-        tags: row.tags || [],
-        score,
-      };
-    })
-    .filter(item => item.score > 0.35) // Threshold of 35% similarity
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3); // Return top 3 matches
+  // 2. Offline Fallback: Load last 50 questions and compute Levenshtein similarity
+  try {
+    const { data, error } = await supabase
+      .from("questions")
+      .select("id, body, author, tags")
+      .order("created_at", { ascending: false })
+      .limit(50);
 
-  return Response.json({ similar });
+    if (error) {
+      return Response.json({ error: error.message }, { status: 500 });
+    }
+
+    const similar = (data ?? [])
+      .map(row => {
+        const score = getSimilarity(q, row.body);
+        return {
+          id: row.id,
+          body: row.body,
+          author: row.author,
+          tags: row.tags || [],
+          score,
+        };
+      })
+      .filter(item => item.score > 0.35) // 35% Levenshtein threshold
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3); // Return top 3 matches
+
+    return Response.json({ similar });
+  } catch (err: any) {
+    return Response.json({ error: err.message }, { status: 500 });
+  }
 }
