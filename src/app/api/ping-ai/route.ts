@@ -15,7 +15,8 @@ export async function GET() {
       contents: "Say 'it works' and nothing else.",
     });
     return Response.json({ reply: res.text?.trim() });
-  } catch (error: any) {
-    return Response.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return Response.json({ error: message }, { status: 500 });
   }
 }

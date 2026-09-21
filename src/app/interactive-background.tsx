@@ -13,19 +13,19 @@ interface Orb {
   pulseSpeed: number;
 }
 
+const themes = {
+  darkpink: { hues: [320, 340, 350, 10], bg: "rgba(24, 8, 16, 1)" },
+  ocean: { hues: [180, 200, 220, 240], bg: "rgba(5, 15, 30, 1)" },
+  sunset: { hues: [10, 30, 50, 320], bg: "rgba(20, 10, 15, 1)" },
+  cosmic: { hues: [260, 280, 300, 320], bg: "rgba(10, 5, 20, 1)" },
+};
+
 export default function InteractiveBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ x: -1000, y: -1000 });
   const orbsRef = useRef<Orb[]>([]);
   const animRef = useRef<number>(0);
   const [theme, setTheme] = useState<"darkpink" | "ocean" | "sunset" | "cosmic">("darkpink");
-
-  const themes = {
-    darkpink: { hues: [320, 340, 350, 10], bg: "rgba(24, 8, 16, 1)" },
-    ocean: { hues: [180, 200, 220, 240], bg: "rgba(5, 15, 30, 1)" },
-    sunset: { hues: [10, 30, 50, 320], bg: "rgba(20, 10, 15, 1)" },
-    cosmic: { hues: [260, 280, 300, 320], bg: "rgba(10, 5, 20, 1)" },
-  };
 
   useEffect(() => {
     const canvas = canvasRef.current;

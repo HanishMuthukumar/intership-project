@@ -21,7 +21,7 @@ export async function GET(req: Request) {
       });
 
       if (!error && data && data.length > 0) {
-        const similar = data.map((row: any) => ({
+        const similar = data.map((row: { id: string; body: string; author: string | null; tags: string[] | null; similarity: number }) => ({
           id: row.id,
           body: row.body,
           author: row.author,
@@ -33,8 +33,9 @@ export async function GET(req: Request) {
         console.error("Supabase RPC match_questions failed in similarity route:", error.message);
       }
     }
-  } catch (err: any) {
-    console.error("AI Similarity check failed, falling back to Levenshtein:", err.message);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("AI Similarity check failed, falling back to Levenshtein:", message);
   }
 
   // 2. Offline Fallback: Load last 50 questions and compute Levenshtein similarity
@@ -65,7 +66,8 @@ export async function GET(req: Request) {
       .slice(0, 3); // Return top 3 matches
 
     return Response.json({ similar });
-  } catch (err: any) {
-    return Response.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return Response.json({ error: message }, { status: 500 });
   }
 }

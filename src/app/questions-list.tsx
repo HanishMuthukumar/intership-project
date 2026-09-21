@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { getVoterId } from "@/lib/voter";
 
 type Solution = {
@@ -16,9 +17,10 @@ type Question = {
   author: string | null;
   tags: string[];
   votes: number;
+  score?: number;
 };
 
-const AVAILABLE_TAGS = ["Next.js", "React", "Database", "Postgres", "Vercel", "Search", "Frontend", "General"];
+const AVAILABLE_TAGS = ["Champions", "Legends", "PPV Events", "Tag Teams", "Royal Rumble", "WrestleMania", "Rivalries", "General"];
 
 function PollBar({
   solution,
@@ -359,10 +361,12 @@ export default function QuestionsList({
   initialQuestions: Question[];
   initialHasMore: boolean;
 }) {
+  const router = useRouter();
   const [questions, setQuestions] = useState(initialQuestions);
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
   
   // Selected tags for the NEW question being drafted
   const [draftTags, setDraftTags] = useState<string[]>([]);
@@ -374,9 +378,24 @@ export default function QuestionsList({
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
+  // Check registration on mount
   useEffect(() => {
-    setHydrated(true);
-  }, []);
+    const stored = localStorage.getItem("wwe_quiz_user");
+    if (!stored) {
+      router.replace("/");
+      return;
+    }
+    try {
+      const user = JSON.parse(stored);
+      setTimeout(() => {
+        setUserName(user.name || "Anonymous");
+        setHydrated(true);
+      }, 0);
+    } catch {
+      router.replace("/");
+      return;
+    }
+  }, [router]);
 
   // Filter & Smart Search handler
   useEffect(() => {
@@ -400,7 +419,9 @@ export default function QuestionsList({
   // Semantic Duplicate Detector: runs when the user types in the Ask input
   useEffect(() => {
     if (draft.trim().length < 6) {
-      setSimilarQuestions([]);
+      setTimeout(() => {
+        setSimilarQuestions([]);
+      }, 0);
       return;
     }
 
@@ -419,15 +440,16 @@ export default function QuestionsList({
 
   async function submit() {
     if (!draft.trim()) return;
+    const effectiveTags = draftTags.length > 0 ? draftTags : ["General"];
     const res = await fetch("/api/questions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: draft, tags: draftTags }),
+      body: JSON.stringify({ body: draft, author: userName, tags: effectiveTags }),
     });
     const created = await res.json();
     
     // Optimistic insert into UI with the generated AI answer included
-    setQuestions((qs) => [{ ...created, votes: 0, tags: draftTags }, ...qs]);
+    setQuestions((qs) => [{ ...created, votes: 0, tags: effectiveTags }, ...qs]);
     setDraft("");
     setDraftTags([]);
     setSimilarQuestions([]);
@@ -468,6 +490,32 @@ export default function QuestionsList({
 
   return (
     <div className="space-y-5">
+      {/* Challenger Profile Header */}
+      {userName && (
+        <div className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 backdrop-blur-xl shadow-lg shadow-black/10">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/20 text-xs">
+              🥊
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white/90">
+                Challenger: <span className="text-amber-400 font-bold">{userName}</span>
+              </p>
+              <p className="text-[10px] text-white/40">In the Ring • Ready to Quiz</p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              localStorage.removeItem("wwe_quiz_user");
+              router.push("/");
+            }}
+            className="text-[11px] font-medium text-white/40 transition-colors hover:text-red-400 hover:underline"
+          >
+            Switch Challenger →
+          </button>
+        </div>
+      )}
+
       {/* Ask box */}
       <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-xl p-4 shadow-lg shadow-black/10">
         <div className="flex gap-2">
@@ -476,13 +524,13 @@ export default function QuestionsList({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submit()}
-            placeholder="Ask a question…"
-            className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white/90 outline-none placeholder:text-white/40 focus:border-indigo-500/40 transition-colors"
+            placeholder="Ask a WWE quiz question…"
+            className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white/90 outline-none placeholder:text-white/40 focus:border-red-500/40 transition-colors"
           />
           <button
             id="ask-button"
             onClick={submit}
-            className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition-all hover:shadow-xl hover:shadow-indigo-500/30 hover:brightness-110 active:scale-95"
+            className="rounded-xl bg-gradient-to-r from-red-600 to-red-500 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-red-500/20 transition-all hover:shadow-xl hover:shadow-red-500/30 hover:brightness-110 active:scale-95"
           >
             Ask
           </button>
@@ -499,7 +547,7 @@ export default function QuestionsList({
             <ul className="space-y-1.5">
               {similarQuestions.map((sq) => (
                 <li key={sq.id} className="text-xs text-white/70 list-disc list-inside">
-                  <span className="font-semibold text-amber-300">{(sq as any).score ? `${((sq as any).score * 100).toFixed(0)}% match` : ""}</span>: &quot;{sq.body}&quot;
+                  <span className="font-semibold text-amber-300">{sq.score ? `${(sq.score * 100).toFixed(0)}% match` : ""}</span>: &quot;{sq.body}&quot;
                 </li>
               ))}
             </ul>
@@ -510,7 +558,7 @@ export default function QuestionsList({
         {draft.trim().length > 0 && (
           <div className="mt-3.5 space-y-1.5 border-t border-white/[0.06] pt-3 animate-in">
             <p className="text-[10px] font-medium text-white/30 uppercase tracking-wider">
-              Categorize your question:
+              Categorize your WWE question:
             </p>
             <div className="flex flex-wrap gap-1.5">
               {AVAILABLE_TAGS.map((tag) => (
@@ -519,7 +567,7 @@ export default function QuestionsList({
                   onClick={() => toggleDraftTag(tag)}
                   className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
                     draftTags.includes(tag)
-                      ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20 border-indigo-400"
+                      ? "bg-red-600 text-white shadow-md shadow-red-500/20 border-red-400"
                       : "bg-white/[0.04] border border-white/[0.08] text-white/60 hover:text-white/90 hover:bg-white/[0.08]"
                   }`}
                 >
@@ -540,7 +588,7 @@ export default function QuestionsList({
             setQuery(e.target.value);
             setSelectedTag(null);
           }}
-          placeholder="Smart search questions…"
+          placeholder="Search WWE questions…"
           className="w-full flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-xl px-4 py-2.5 text-sm text-white/90 outline-none placeholder:text-white/40 focus:border-indigo-500/40 transition-colors"
         />
         <span className="shrink-0 text-xs text-white/30">
@@ -561,7 +609,7 @@ export default function QuestionsList({
               : "bg-white/[0.02] border border-white/[0.06] text-white/50 hover:text-white/80"
           }`}
         >
-          All Topics
+          All Categories
         </button>
         {AVAILABLE_TAGS.map((tag) => (
           <button
@@ -572,7 +620,7 @@ export default function QuestionsList({
             }}
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
               selectedTag === tag
-                ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                ? "bg-red-600/20 text-red-300 border border-red-500/30"
                 : "bg-white/[0.02] border border-white/[0.06] text-white/50 hover:text-white/80"
             }`}
           >
@@ -590,7 +638,7 @@ export default function QuestionsList({
 
       {questions.length === 0 && (
         <p className="rounded-2xl border border-dashed border-white/[0.1] p-8 text-center text-sm text-white/40">
-          No questions yet in this category.
+          No WWE questions yet in this category. Be the first to ask! 🎤
         </p>
       )}
 

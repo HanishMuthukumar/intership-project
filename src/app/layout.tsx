@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Live Q&A — Interactive Polling",
-  description: "Ask questions, upvote, and vote on the best solutions in real-time with an interactive polling system.",
+  title: "WWE Quiz — Interactive Polling",
+  description: "Test your WWE knowledge! Ask questions, vote for the best answers, and crown the champion in our interactive WWE quiz platform.",
 };
 
 export default function RootLayout({

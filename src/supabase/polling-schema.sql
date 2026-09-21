@@ -32,8 +32,8 @@ alter table solution_votes enable row level security;
 create policy "Service role full access" on solutions for all using (true) with check (true);
 create policy "Service role full access" on solution_votes for all using (true) with check (true);
 
--- ── Seed some solutions for existing questions ───────────────────────────────
--- Add sample solutions to the first few questions so the UI shows polls
+-- ── Seed some solutions for existing WWE questions ───────────────────────────────
+-- Add sample answers/solutions to questions so the UI shows interactive polls
 do $$
 declare
   q_id uuid;
@@ -41,26 +41,10 @@ begin
   -- Get first question
   select id into q_id from questions order by created_at desc limit 1;
   if q_id is not null then
-    insert into solutions (question_id, body, author) values
-      (q_id, 'Use Vercel CLI: vercel --prod', 'Alex'),
-      (q_id, 'Push to GitHub and connect Vercel to the repo', 'Jordan'),
-      (q_id, 'Use the Vercel dashboard import feature', 'Casey');
-  end if;
-
-  -- Get second question
-  select id into q_id from questions order by created_at desc offset 1 limit 1;
-  if q_id is not null then
-    insert into solutions (question_id, body, author) values
-      (q_id, 'Server components run on the server and can access databases directly', 'Riley'),
-      (q_id, 'Client components use "use client" directive and run in the browser', 'Morgan');
-  end if;
-
-  -- Get third question
-  select id into q_id from questions order by created_at desc offset 2 limit 1;
-  if q_id is not null then
-    insert into solutions (question_id, body, author) values
-      (q_id, 'Add indexes on columns used in WHERE clauses and JOIN conditions', 'Taylor'),
-      (q_id, 'Use EXPLAIN ANALYZE to identify slow queries first', 'Quinn'),
-      (q_id, 'Start without indexes, add them when queries become slow', 'Avery');
+    insert into solutions (question_id, body, author, is_accepted) values
+      (q_id, 'The Undertaker debuted at Survivor Series 1990.', 'AI Assistant (Automated)', true),
+      (q_id, 'Kane', 'Challenger_Kane', false),
+      (q_id, 'Mick Foley', 'Challenger_Foley', false);
   end if;
 end $$;
+

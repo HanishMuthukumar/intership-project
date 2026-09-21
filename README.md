@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏆 WWE Live Quiz Arena
 
-## Getting Started
+An interactive, real-time WWE Live Quiz and Polling application powered by **Next.js (App Router)**, **Supabase (PostgreSQL + pgvector)**, and **Google Gemini AI**.
 
-First, run the development server:
+Live on Vercel: [https://intership-project-xy9l.vercel.app](https://intership-project-xy9l.vercel.app)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🌟 Key Features
+
+1. **Challenger Registration & Profile:**
+   - Step into the ring by registering with your Name, Age, and Email.
+   - Profile persisted locally; automatically welcomes back existing champions.
+
+2. **WWE Trivia & Community Questions:**
+   - Ask questions across 8 official WWE categories:
+     - 🥇 `Champions`
+     - 👑 `Legends`
+     - 🎟️ `PPV Events`
+     - 👥 `Tag Teams`
+     - ⏱️ `Royal Rumble`
+     - ⚡ `WrestleMania`
+     - 🔥 `Rivalries`
+     - 🌐 `General`
+   - Real-time upvoting system with duplicate prevention per voter ID.
+
+3. **Gemini AI Assistant & Auto-Answers:**
+   - Powered by Google Gemini (`gemini-2.5-flash`): Automatically generates detailed, fact-checked answers for every new question submitted by challengers.
+   - Built-in graceful WWE fallback knowledge base for high availability.
+
+4. **Smart AI Semantic Search & Duplicate Detection:**
+   - 768-dimensional vector embeddings generated using Gemini Embedding model.
+   - Instant duplicate warnings while typing a question to prevent repetitive trivia.
+   - Semantic vector similarity search (`pgvector` cosine distance) + Postgres GIN full-text search.
+
+5. **Live Polling & Solution Verification:**
+   - Interactive poll bars with percentage calculations and vote counts.
+   - Community members can submit alternative solution options.
+   - Verify / accept correct WWE answers with the verified badge.
+
+6. **Dynamic Theme Switcher:**
+   - Interactive canvas particle background with multiple ringside themes:
+     - `darkpink`, `ocean`, `sunset`, `cosmic`.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework:** Next.js 16 (React 19, TypeScript)
+- **Styling:** Tailwind CSS
+- **Database:** Supabase PostgreSQL with `pgvector` & Row-Level Security
+- **AI / Embeddings:** Google Gemini (`@google/genai`)
+- **Deployment:** Vercel
+
+---
+
+## 🚀 Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+SUPABASE_URL=https://ckibvzxicpvtrojtalqw.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🏃 Running Locally
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Install dependencies
+npm install
 
-## Learn More
+# Run development server
+npm run dev
 
-To learn more about Next.js, take a look at the following resources:
+# Build for production
+npm run build
+npm start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
