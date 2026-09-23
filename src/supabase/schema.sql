@@ -188,7 +188,7 @@ BEGIN
     ELSIF q.body ILIKE '%2024 Men''s Royal Rumble%' THEN
       INSERT INTO solutions (question_id, body, author, is_accepted)
       VALUES (q.id, 'Cody Rhodes won the 2024 Men''s Royal Rumble from the #15 spot, last eliminating CM Punk.', 'AI Assistant (Automated)', true);
-    ELSIF q.body ILIKE '%Shield%' THEN
+    ELSIF q.body ILIKE '%Dean Ambrose%' OR q.body ILIKE '%Seth Rollins%' THEN
       INSERT INTO solutions (question_id, body, author, is_accepted)
       VALUES (q.id, 'The Shield debuted at Survivor Series 2012 and went on to become one of the most dominant factions in history.', 'AI Assistant (Automated)', true);
     ELSIF q.body ILIKE '%Texas Rattlesnake%' THEN
